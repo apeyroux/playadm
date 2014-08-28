@@ -1,0 +1,186 @@
+Use https://github.com/communaute-cimi/glay
+
+* Install 
+
+#+BEGIN_SRC sh
+go get github.com/communaute-cimi/playadm
+#+END_SRC
+
+or you can dwl linux64 bin in bin rep.
+
+* Usage
+#+BEGIN_SRC sh
+playadm -h
+  -all=false: action for all apps
+  -c="/etc/playadm.json": Config file
+  -id=0: id app. Id 0 is all apps. Use it with start/stop/restart
+  -list=false: list play apps aviable on this server
+  -nagios=false: Nagios plugin
+  -restart=false: restart apps with id app. Id 0 is all apps
+  -start=false: start play apps with id app. Id 0 is all apps
+  -stop=false: stop play apps with id app. Id 0 is all apps
+#+END_SRC
+* Lister les applications
+#+BEGIN_SRC sh
+$ sudo ./playadm -c playadm.json -list
+-----------------------------------------------------
+|  ID | App                            | Status     |
+-----------------------------------------------------
+|   1 | gsp2-prod                      | Up         |
+|   2 | gsp2-dev                       | Up         |
+|   3 | surfasig-dev                   | Down       |
+|   4 | surfasig-prod                  | Failure    |
+-----------------------------------------------------
+#+END_SRC
+* Démarrer une/toutes application(s) 
+#+BEGIN_SRC sh
+$ playadm -c playadm.json -start -id 2
+2014/08/26 13:10:46 gsp2-dev is already running
+#+END_SRC 
+
+#+BEGIN_SRC sh
+$ playadm -c playadm.json -start -all
+2014/08/26 13:13:12 gsp2-prod is already running
+2014/08/26 13:13:12 gsp2-dev is already running
+2014/08/26 13:13:12 surfasig-dev err:exit status 2
+2014/08/26 13:13:12 surfasig-prod stdout:...
+#+END_SRC 
+* Stopper une/toutes application(s)
+#+BEGIN_SRC sh
+playadm -c playadm.json -stop -id 3
+2014/08/26 13:11:45 surfasig-dev is already down
+#+END_SRC
+
+#+BEGIN_SRC sh
+playadm -c playadm.json -stop -all
+2014/08/26 13:12:47 gsp2-prod err:exit status 1
+2014/08/26 13:12:47 gsp2-dev err:exit status 1
+2014/08/26 13:12:47 surfasig-dev is already down
+2014/08/26 13:12:47 surfasig-prod is already down
+2014/08/26 13:12:47 surfasig-beta is already down
+#+END_SRC
+* Restart une/toutes application(s)
+#+BEGIN_SRC sh
+playadm -c playadm.json -stop -start -all
+#+END_SRC
+
+#+BEGIN_SRC sh
+playadm -c playadm.json -stop -start -id 2
+#+END_SRC
+* Config sample
+
+maxfailure and nagios code :
+
+#+BEGIN_SRC 
+if 0 failure : OK
+if nbfailure >= maxfailure : Critical
+if nbfailure < maxfailure : Warn
+#+END_SRC
+
+#+BEGIN_SRC json
+{
+    "maxfailure":2,
+    "apps":[
+	{
+	    "name":"gsp2-prod",
+	    "home":"/var/www/playapps/gsp2/release",
+	    "startcmd":"play start --%prod",
+            "stopcmd":"play stop",
+	    "user":"play"
+	}, {
+	    "name":"transverse",
+	    "home":"/var/www/playapps/transverse/referentiel/release",
+	    "startcmd":"play start --%dev",
+            "stopcmd":"play stop",
+	    "user":"play"
+	}, {
+	    "name":"metier",
+	    "home":"/var/www/playapps/metier/projets/release",
+	    "startcmd":"play start --%dev",
+            "stopcmd":"play stop",
+	    "user":"play"
+	}
+    ]
+}
+#+END_SRC
+
+* Nagios
+
+Simple Nagios Plugin that check's lives Play! App.
+
+[[/media/ok.png]]
+
+[[/media/warn.png]]
+
+** nagios client (play srv)
+
+*** Install
+
+#+BEGIN_SRC sh
+apt-get install nagios-nrpe-server
+cp playadm /usr/lib/nagios/plugins
+ln -s /usr/lib/nagios/plugins/playadm /usr/lib/nagios/plugins/check_play
+#+END_SRC
+
+*** /etc/nagios/nrpe.cfg
+
+#+BEGIN_SRC 
+allowed_hosts=127.0.0.1,10.226.150.175
+dont_blame_nrpe=1
+command_prefix=/usr/bin/sudo # need for check pid
+command[check_play]=/usr/lib/nagios/plugins/check_play
+# or command[check_play]=/usr/lib/nagios/plugins/check_play -c /opt/etc/maconf.json
+#+END_SRC
+
+*** Edit sudoer
+
+#+BEGIN_SRC 
+nagios          ALL=(ALL) NOPASSWD: /usr/lib/nagios/plugins/
+#+END_SRC
+
+*** Restart nrpe server
+
+#+BEGIN_SRC sh
+restart /etc/init.d/nagios-nrpe-server restart
+#+END_SRC
+
+** nagios server
+
+*** Install
+
+#+BEGIN_SRC 
+apt-get install nagios-nrpe-server
+#+END_SRC
+
+*** host exemple
+
+#+BEGIN_SRC 
+define host{
+        use                     generic-host
+	host_name		playprod.swap
+        alias                   playprod
+        address                 10.226.150.158
+        }
+
+define service{
+        use                             generic-service         ; Name of service template to use
+        host_name                       playprod.swap
+        service_description             Disk Space
+        check_command                   check_nrpe!check_rootfs!10!s!20%!10%
+}
+
+define service{
+       use			generic-service
+       host_name 		playprod.swap
+       service_description 	LoadAV
+       check_command 		check_nrpe!check_load!10
+}
+
+define service{
+       use			generic-service
+       host_name 		playprod.swap
+       service_description 	PlayApps
+       check_command 		check_nrpe!check_play!5!nagios
+}
+#+END_SRC
+

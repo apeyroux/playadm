@@ -1,0 +1,36 @@
+{
+    "maxfailure":2,
+    "apps":[
+	{
+	    "name":"gsp2-prod",
+	    "home":"/var/www/playapps/gsp2",
+	    "startcmd":"play start --%prod",
+	    "stopcmd":"play stop",
+	    "user":"play"
+	}, {
+	    "name":"gsp2-dev",
+	    "home":"/var/www/playapps/gsp2",
+	    "startcmd":"play start --%dev",
+	    "stopcmd":"play stop",
+	    "user":"play"
+	}, {
+	    "name":"surfasig-dev",
+	    "home":"/var/www/playapps/surfasig",
+	    "startcmd":"play start --%dev",
+	    "stopcmd":"play stop",
+	    "user":"play"
+	}, {
+	    "name":"surfasig-prod",
+	    "home":"/var/www/playapps/surfasig-prod",
+	    "startcmd":"ls /",
+	    "stopcmd":"play stop",
+	    "user":"ja"
+	}, {
+	    "name":"surfasig-beta",
+	    "home":"/var/www/",
+	    "startcmd":"ls",
+	    "stopcmd":"play stop",
+	    "user":"ja"
+	}
+    ]
+}
