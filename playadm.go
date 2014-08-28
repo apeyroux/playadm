@@ -31,7 +31,7 @@ var (
 	flnagios  *bool   = flag.Bool("nagios", false, "Nagios plugin")
 	fllogs    *bool   = flag.Bool("logs", false, "View log app")
 	flconfig  *string = flag.String("c", "/etc/playadm.json", "Config file")
-	flversion *bool   = flag.Bool("version", true, "Show version")
+	flversion *bool   = flag.Bool("version", false, "Show version")
 )
 
 func getConfiguration(configpath string) (configuration Configuration, err error) {
