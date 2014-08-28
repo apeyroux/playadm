@@ -18,6 +18,8 @@ type Configuration struct {
 	Applications []glay.Application `json:"apps"`
 }
 
+const VERSION = "1.0"
+
 var (
 	flid    *int  = flag.Int("id", 0, "id app. Id 0 is all apps. Use it with start/stop/restart")
 	flall   *bool = flag.Bool("all", false, "action for all apps")
@@ -25,10 +27,11 @@ var (
 	flstop  *bool = flag.Bool("stop", false, "stop play apps with id app. Id 0 is all apps")
 	//	flpurge *bool = flag.Bool("purge", false, "purge failure instance")
 	//	flrestart *bool   = flag.Bool("restart", false, "restart apps with id app. Id 0 is all apps")
-	fllist   *bool   = flag.Bool("list", false, "list play apps aviable on this server")
-	flnagios *bool   = flag.Bool("nagios", false, "Nagios plugin")
-	fllogs   *bool   = flag.Bool("logs", false, "View log app")
-	flconfig *string = flag.String("c", "/etc/playadm.json", "Config file")
+	fllist    *bool   = flag.Bool("list", false, "list play apps aviable on this server")
+	flnagios  *bool   = flag.Bool("nagios", false, "Nagios plugin")
+	fllogs    *bool   = flag.Bool("logs", false, "View log app")
+	flconfig  *string = flag.String("c", "/etc/playadm.json", "Config file")
+	flversion *bool   = flag.Bool("version", true, "Show version")
 )
 
 func getConfiguration(configpath string) (configuration Configuration, err error) {
@@ -131,6 +134,12 @@ func main() {
 
 	if err != nil {
 		log.Fatal("%s", err)
+	}
+
+	if *flversion {
+		fmt.Printf("playadm version : %s\n", VERSION)
+		fmt.Printf("glay version : %s\n", VERSION)
+		os.Exit(0)
 	}
 
 	if *flstart && *flid != 0 {
