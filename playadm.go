@@ -18,14 +18,14 @@ type Configuration struct {
 	Applications []glay.Application `json:"apps"`
 }
 
-const VERSION = "1.0"
+const VERSION = "1.0.1"
 
 var (
 	flid    *int  = flag.Int("id", 0, "id app. Id 0 is all apps. Use it with start/stop/restart")
 	flall   *bool = flag.Bool("all", false, "action for all apps")
 	flstart *bool = flag.Bool("start", false, "start play apps with id app. Id 0 is all apps")
 	flstop  *bool = flag.Bool("stop", false, "stop play apps with id app. Id 0 is all apps")
-	//	flpurge *bool = flag.Bool("purge", false, "purge failure instance")
+	flclean *bool = flag.Bool("clean", false, "clean failure instance")
 	//	flrestart *bool   = flag.Bool("restart", false, "restart apps with id app. Id 0 is all apps")
 	fllist    *bool   = flag.Bool("list", false, "list play apps aviable on this server")
 	flnagios  *bool   = flag.Bool("nagios", false, "Nagios plugin")
@@ -116,6 +116,21 @@ func stop(app glay.Application) {
 	}
 }
 
+func cleanall(configuration Configuration) {
+	for _, app := range configuration.Applications {
+		clean(app)
+	}
+}
+
+func clean(app glay.Application) {
+	err := app.Clean()
+	if err != nil {
+		log.Printf("%s - %s", app.Name, err)
+	} else {
+		log.Printf("%s - is clean", app.Name)
+	}
+}
+
 func showlogs(config Configuration, app glay.Application) (err error) {
 	log := fmt.Sprintf("%s/logs/system.out", app.Home)
 	flog, err := ioutil.ReadFile(log)
@@ -160,6 +175,16 @@ func main() {
 		stop(app)
 	} else if *flstop && *flall {
 		stopall(configuration)
+	}
+
+	if *flclean && *flid != 0 {
+		app, err := getAppById(*flid-1, configuration)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+		clean(app)
+	} else if *flclean && *flall {
+		cleanall(configuration)
 	}
 
 	if *flnagios {
