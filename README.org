@@ -1,5 +1,7 @@
 Use https://github.com/communaute-cimi/glay
 
+[[/media/httpd.png]]
+
 * Install 
 
 #+BEGIN_SRC sh
@@ -19,7 +21,10 @@ playadm -h
   -restart=false: restart apps with id app. Id 0 is all apps
   -start=false: start play apps with id app. Id 0 is all apps
   -stop=false: stop play apps with id app. Id 0 is all apps
+  -httpd=false: httpd
 #+END_SRC
+* -httpd
+Viewer http
 * Lister les applications
 #+BEGIN_SRC 
 ja@x220 ~ $ playadm -list

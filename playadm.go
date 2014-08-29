@@ -153,11 +153,14 @@ func mainHandler(configuration Configuration) http.Handler {
 		Name   string
 		Pid    int
 		VmData int
+		Port   int
 		State  glay.State
 	}
 
 	type Data struct {
-		Apps []App
+		Apps     []App
+		MemTotal float32
+		MemFree  float32
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -173,11 +176,18 @@ func mainHandler(configuration Configuration) http.Handler {
 			pid, _ := app.Pid()
 			proc, _ := linuxproc.FindProcess(pid)
 			vmdata, _ := proc.VmData()
+			port, _ := app.ListenPort()
 			vmdatas := strings.Split(vmdata, " ")
 			ivmdata, _ := strconv.Atoi(vmdatas[0])
-			a := App{app.Name, pid, ivmdata, state}
+			a := App{app.Name, pid, ivmdata, port, state}
 			data.Apps = append(data.Apps, a)
 		}
+
+		memory := new(linuxproc.Memory)
+		memFree, _ := memory.MemFree()
+		data.MemFree = float32(memFree) * 9.53674316406E-7
+		memTotal, _ := memory.MemTotal()
+		data.MemTotal = float32(memTotal)*9.53674316406E-7 - data.MemFree
 
 		err = tpl.Execute(w, data)
 		if err != nil {
