@@ -8,9 +8,12 @@ import (
 	"github.com/communaute-cimi/linuxproc"
 	//	"github.com/communaute-cimi/glay/utils"
 	"errors"
+	"html/template"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -33,6 +36,8 @@ var (
 	fllogs    *bool   = flag.Bool("logs", false, "View log app")
 	flconfig  *string = flag.String("c", "/etc/playadm.json", "Config file")
 	flversion *bool   = flag.Bool("version", false, "Show version")
+	flhttpd   *bool   = flag.Bool("httpd", false, "httpd")
+	fllisten  *string = flag.String("listen", ":8080", "Listen ip:port or :port")
 )
 
 func getConfiguration(configpath string) (configuration Configuration, err error) {
@@ -142,6 +147,45 @@ func showlogs(config Configuration, app glay.Application) (err error) {
 	return
 }
 
+func mainHandler(configuration Configuration) http.Handler {
+
+	type App struct {
+		Name   string
+		Pid    int
+		VmData int
+		State  glay.State
+	}
+
+	type Data struct {
+		Apps []App
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tpl, err := template.ParseFiles("tpl/main.html")
+		if err != nil {
+			log.Printf("%s", err)
+		}
+
+		data := new(Data)
+
+		for _, app := range configuration.Applications {
+			state, _ := app.State()
+			pid, _ := app.Pid()
+			proc, _ := linuxproc.FindProcess(pid)
+			vmdata, _ := proc.VmData()
+			vmdatas := strings.Split(vmdata, " ")
+			ivmdata, _ := strconv.Atoi(vmdatas[0])
+			a := App{app.Name, pid, ivmdata, state}
+			data.Apps = append(data.Apps, a)
+		}
+
+		err = tpl.Execute(w, data)
+		if err != nil {
+			log.Printf("%s", err)
+		}
+	})
+}
+
 func main() {
 	flag.Parse()
 
@@ -152,7 +196,7 @@ func main() {
 	configuration, err := getConfiguration(*flconfig)
 
 	if err != nil {
-		log.Fatal("%s", err)
+		log.Fatalf("%s", err)
 	}
 
 	if *flversion {
@@ -161,14 +205,14 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *flstart && *flid != 0 {
+	if *flclean && *flid != 0 {
 		app, err := getAppById(*flid-1, configuration)
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
-		start(app)
-	} else if *flstart && *flall {
-		startall(configuration)
+		clean(app)
+	} else if *flclean && *flall {
+		cleanall(configuration)
 	}
 
 	if *flstop && *flid != 0 {
@@ -181,14 +225,14 @@ func main() {
 		stopall(configuration)
 	}
 
-	if *flclean && *flid != 0 {
+	if *flstart && *flid != 0 {
 		app, err := getAppById(*flid-1, configuration)
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
-		clean(app)
-	} else if *flclean && *flall {
-		cleanall(configuration)
+		start(app)
+	} else if *flstart && *flall {
+		startall(configuration)
 	}
 
 	if *flnagios {
@@ -208,5 +252,12 @@ func main() {
 
 	if *fllist {
 		listApps(configuration)
+	}
+
+	if *flhttpd {
+		// http://stackoverflow.com/questions/17541333/fileserver-handler-with-some-other-http-handlers
+		http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+		http.Handle("/", mainHandler(configuration))
+		http.ListenAndServe(*fllisten, nil)
 	}
 }
