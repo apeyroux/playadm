@@ -1,4 +1,3 @@
-Use https://github.com/communaute-cimi/glay
 
 [[/media/httpd.png]]
 
