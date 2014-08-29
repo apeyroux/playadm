@@ -21,16 +21,22 @@ playadm -h
   -stop=false: stop play apps with id app. Id 0 is all apps
 #+END_SRC
 * Lister les applications
-#+BEGIN_SRC sh
-$ sudo ./playadm -c playadm.json -list
------------------------------------------------------
-|  ID | App                            | Status     |
------------------------------------------------------
-|   1 | gsp2-prod                      | Up         |
-|   2 | gsp2-dev                       | Up         |
-|   3 | surfasig-dev                   | Down       |
-|   4 | surfasig-prod                  | Failure    |
------------------------------------------------------
+#+BEGIN_SRC 
+ja@x220 ~ $ playadm -version
+---------------------------------------------------------------------------------------------
+|  ID | App                                                | Status     | Port | VmData     |
+---------------------------------------------------------------------------------------------
+|   1 | gsp2                                               | Up         | 8081 | 1596772 kB |
+|   2 | gsp2-metier-agent                                  | Up         | 9006 | 1439440 kB |
+|   3 | gsp2-metier-budget                                 | Up         | 9003 | 1408024 kB |
+|   4 | gsp2-metier-etp                                    | Up         | 9004 | 1389632 kB |
+|   5 | gsp2-metier-projets                                | Up         | 9001 | 1379880 kB |
+|   6 | gsp2-transverse-referentiel                        | Up         | 9002 | 1341840 kB |
+|   7 | gsp2-transverse-traces                             | Up         | 9000 | 1324584 kB |
+|   8 | metier                                             | Up         | 9001 | 1379880 kB |
+|   9 | amsg                                               | Up         | 9011 | 1333208 kB |
+|  10 | amsg-msg                                           | Up         | 9010 | 1365880 kB |
+---------------------------------------------------------------------------------------------
 #+END_SRC
 * Démarrer une/toutes application(s) 
 #+BEGIN_SRC sh
