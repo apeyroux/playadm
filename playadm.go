@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/communaute-cimi/glay"
+	"github.com/communaute-cimi/linuxproc"
 	//	"github.com/communaute-cimi/glay/utils"
 	"errors"
 	"io/ioutil"
@@ -18,7 +19,7 @@ type Configuration struct {
 	Applications []glay.Application `json:"apps"`
 }
 
-const VERSION = "1.0.1"
+const VERSION = "1.0.2"
 
 var (
 	flid    *int  = flag.Int("id", 0, "id app. Id 0 is all apps. Use it with start/stop/restart")
@@ -51,25 +52,28 @@ func getConfiguration(configpath string) (configuration Configuration, err error
 }
 
 func listApps(config Configuration) {
-	header := fmt.Sprintf("| %3s | %-50s | %-10s | %s |", "ID", "App", "Status", "Port")
+	header := fmt.Sprintf("| %3s | %-50s | %-10s | %-4s | %-12s |", "ID", "App", "Status", "Port", "VmData")
 	fmt.Printf("%s\n", strings.Repeat("-", len(header)))
 	fmt.Printf("%s\n", header)
 	fmt.Printf("%s\n", strings.Repeat("-", len(header)))
 	for i, app := range config.Applications {
 		status, _ := app.State()
+		pid, _ := app.Pid()
+		proc, _ := linuxproc.FindProcess(pid)
+		vmdata, _ := proc.VmData()
 		switch status {
 		case glay.UP:
 			port, _ := app.ListenPort()
-			fmt.Printf("| %3d | %-50s | %-10s | %-4d |\n", i+1, app.Name, "Up", port)
+			fmt.Printf("| %3d | %-50s | %-10s | %-4d | %-12s |\n", i+1, app.Name, "Up", port, vmdata)
 		case glay.DOWN:
 			port, _ := app.ListenPort()
-			fmt.Printf("| %3d | %-50s | %-10s | %-4d |\n", i+1, app.Name, "Down", port)
+			fmt.Printf("| %3d | %-50s | %-10s | %-4d | %-12s |\n", i+1, app.Name, "Down", port, vmdata)
 		case glay.FAILURE:
 			port, _ := app.ListenPort()
-			fmt.Printf("| %3d | %-50s | %-10s | %-4d |\n", i+1, app.Name, "Failure", port)
+			fmt.Printf("| %3d | %-50s | %-10s | %-4d | %-12s |\n", i+1, app.Name, "Failure", port, vmdata)
 		default:
 			port, _ := app.ListenPort()
-			fmt.Printf("| %3d | %-50s | %-10s | %-4d |\n", i+1, app.Name, "Failure", port)
+			fmt.Printf("| %3d | %-50s | %-10s | %-4d | %-12s |\n", i+1, app.Name, "Failure", port, vmdata)
 		}
 	}
 	fmt.Printf("%s\n", strings.Repeat("-", len(header)))
@@ -153,7 +157,7 @@ func main() {
 
 	if *flversion {
 		fmt.Printf("playadm version : %s\n", VERSION)
-		fmt.Printf("glay version : %s\n", VERSION)
+		fmt.Printf("glay version : %s\n", glay.VERSION)
 		os.Exit(0)
 	}
 
