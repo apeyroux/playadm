@@ -1,0 +1,84 @@
+<html>
+  <head>
+    <title>playadm</title>
+    <script type="text/javascript" src="static/jqplot/plugins/jqplot.canvasTextRenderer.min.js"></script>
+    <script type="text/javascript" src="static/jqplot/plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
+    <script language="javascript" type="text/javascript" src="static/jqplot/jquery.min.js"></script>
+    <script language="javascript" type="text/javascript" src="static/jqplot/jquery.jqplot.min.js"></script>
+    <script type="text/javascript" src="static/jqplot/plugins/jqplot.pieRenderer.min.js"></script>
+    <script type="text/javascript" src="static/jqplot/plugins/jqplot.donutRenderer.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="static/jqplot/jquery.jqplot.css" />
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap-theme.min.css">
+    <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+
+      $(document).ready(function(){
+      var s1 = [
+      {{range .Apps}}
+      ["{{.Name}}",{{.VmData}}],
+      {{end}}
+      ];
+      
+      var plot3 = $.jqplot('chart3', [s1], {
+      title:'Répartition de la RAM (kB)',
+      seriesDefaults: {
+      renderer:$.jqplot.DonutRenderer,
+      rendererOptions:{
+      sliceMargin: 3,
+      startAngle: -90,
+      showDataLabels: true,
+      dataLabels: 'value'
+      }
+      },
+      legend: { show:true, location: 'e' }
+      });
+      });
+      
+    </script>
+  </head>
+  <body>
+    <nav class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/">playadm</a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <!-- <ul class="nav navbar-nav"> -->
+          <!--   <li><a href="/admin/">Admin</a></li> -->
+          <!-- </ul> -->
+          <p class="navbar-text navbar-right"><a href="#" class="navbar-link">st(si)²</a>/sdac</p>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <center>
+	<div id="chart3" style="height:400px;width:600px; "/>
+      </center>
+      <div class="panel panel-default">
+	<table class="table">
+	  <tr>
+	    <th>Name</th><th>Pid</th><th>VmRam</th><th>State</th>
+	  </tr>
+	  {{ range .Apps}}
+	  <tr>
+	    <td>{{.Name}}</td>
+	    <td>{{.Pid}}</td>
+	    <td>{{.VmData}}</td>
+	    <td>
+	      {{if eq .State 0}}
+	      <button class="btn btn-success">Run</button>
+	      {{else if eq .State 1}}
+	      <button class="btn btn-warning">Down</button>
+	      {{else}}
+	      <button class="btn btn-danger">Fail</button>
+	      {{end}}
+	    </td>
+	  </tr>
+	  {{ end }}
+	</table>
+      </div>
+    </div>
+  </body>
+</html>
