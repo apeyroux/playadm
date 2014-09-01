@@ -70,16 +70,16 @@ func listApps(config Configuration) {
 		switch status {
 		case glay.UP:
 			port, _ := app.ListenPort()
-			fmt.Printf("| %3d | %-50s | %-10s | %-4d | %-12s |\n", i+1, app.Name, "Up", port, vmdata)
+			fmt.Printf("| %3d | %-50s | %-10s | %-4d | %-12d |\n", i+1, app.Name, "Up", port, vmdata)
 		case glay.DOWN:
 			port, _ := app.ListenPort()
-			fmt.Printf("| %3d | %-50s | %-10s | %-4d | %-12s |\n", i+1, app.Name, "Down", port, vmdata)
+			fmt.Printf("| %3d | %-50s | %-10s | %-4d | %-12d |\n", i+1, app.Name, "Down", port, vmdata)
 		case glay.FAILURE:
 			port, _ := app.ListenPort()
-			fmt.Printf("| %3d | %-50s | %-10s | %-4d | %-12s |\n", i+1, app.Name, "Failure", port, vmdata)
+			fmt.Printf("| %3d | %-50s | %-10s | %-4d | %-12d |\n", i+1, app.Name, "Failure", port, vmdata)
 		default:
 			port, _ := app.ListenPort()
-			fmt.Printf("| %3d | %-50s | %-10s | %-4d | %-12s |\n", i+1, app.Name, "Failure", port, vmdata)
+			fmt.Printf("| %3d | %-50s | %-10s | %-4d | %-12d |\n", i+1, app.Name, "Failure", port, vmdata)
 		}
 	}
 	fmt.Printf("%s\n", strings.Repeat("-", len(header)))
