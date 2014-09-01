@@ -7,14 +7,15 @@ import (
 	"github.com/communaute-cimi/glay"
 	"github.com/communaute-cimi/linuxproc"
 	//	"github.com/communaute-cimi/glay/utils"
+	"code.google.com/p/go.net/websocket"
 	"errors"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
+	"time"
 )
 
 type Configuration struct {
@@ -177,9 +178,7 @@ func mainHandler(configuration Configuration) http.Handler {
 			proc, _ := linuxproc.FindProcess(pid)
 			vmdata, _ := proc.VmData()
 			port, _ := app.ListenPort()
-			vmdatas := strings.Split(vmdata, " ")
-			ivmdata, _ := strconv.Atoi(vmdatas[0])
-			a := App{app.Name, pid, ivmdata, port, state}
+			a := App{app.Name, pid, vmdata, port, state}
 			data.Apps = append(data.Apps, a)
 		}
 
@@ -194,6 +193,65 @@ func mainHandler(configuration Configuration) http.Handler {
 			log.Printf("%s", err)
 		}
 	})
+}
+
+func wsMemoryConsoHandler(configuration Configuration) func(ws *websocket.Conn) {
+	return func(ws *websocket.Conn) {
+		for {
+			memory := new(linuxproc.Memory)
+			mf, _ := memory.MemFree()
+			mt, _ := memory.MemTotal()
+			// utiliser json.MArshal car là, c'est moche ...
+			msg := fmt.Sprintf("[{\"name\":\"free\",\"y\":%.2f,\"color\":\"#D0FA58\"},{\"name\":\"occ\",\"y\":%.2f,\"color\":\"#F78181\"}]", float32(mf)*9.53674316406E-7, float32(mt)*9.53674316406E-7-float32(mf)*9.53674316406E-7)
+			name := []byte(msg)
+			ws.Write(name)
+			time.Sleep(250 * time.Millisecond)
+		}
+	}
+}
+
+func wsMemoryProcessGraphHandler(configuration Configuration) func(*websocket.Conn) {
+	return func(ws *websocket.Conn) {
+		i := 0
+		for {
+			lpoints := []string{}
+			for _, a := range configuration.Applications {
+				t := time.Now().Unix()
+				// utiliser json.MArshal car là, c'est moche ...
+				pid, _ := a.Pid()
+				p, _ := linuxproc.FindProcess(pid)
+				vmpeak, _ := p.VmPeak()
+				lpoints = append(lpoints, fmt.Sprintf("{\"x\":%d,\"y\":%.2f,\"name\":\"%s\"}", t, float32(vmpeak)*9.53674316406E-7, a.Name))
+			}
+			msg, _ := json.Marshal(lpoints)
+			ws.Write(msg)
+			time.Sleep(2 * time.Second)
+			i += 1
+		}
+	}
+}
+
+func wsMemoryProcessHandler(configuration Configuration) func(*websocket.Conn) {
+	return func(ws *websocket.Conn) {
+		i := 0
+		for {
+			apps := configuration.Applications
+			appspoints := []string{}
+			for _, a := range apps {
+				// utiliser json.MArshal car là, c'est moche ...
+				pid, _ := a.Pid()
+				p, _ := linuxproc.FindProcess(pid)
+				vmdata, _ := p.VmData()
+				vmpeak, _ := p.VmPeak()
+				state, _ := a.State()
+				appspoints = append(appspoints, fmt.Sprintf("{\"peak\":%.2f,\"data\":%.2f,\"name\":\"%s\",\"pid\":%d,\"state\":\"%d\"}", float32(vmdata)*9.53674316406E-7, float32(vmpeak)*9.53674316406E-7, a.Name, pid, state))
+			}
+			msg, _ := json.Marshal(appspoints)
+			ws.Write(msg)
+			time.Sleep(2000 * time.Millisecond)
+			i += 1
+		}
+	}
 }
 
 func main() {
@@ -267,6 +325,9 @@ func main() {
 	if *flhttpd {
 		// http://stackoverflow.com/questions/17541333/fileserver-handler-with-some-other-http-handlers
 		http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+		http.Handle("/wsmemoryconsograph/", websocket.Handler(wsMemoryConsoHandler(configuration)))
+		http.Handle("/wsmemoryprocessgraph/", websocket.Handler(wsMemoryProcessGraphHandler(configuration)))
+		http.Handle("/wsmemoryprocess/", websocket.Handler(wsMemoryProcessHandler(configuration)))
 		http.Handle("/", mainHandler(configuration))
 		http.ListenAndServe(*fllisten, nil)
 	}

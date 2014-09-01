@@ -1,64 +1,15 @@
 <html>
   <head>
-    <title>playadm</title>
-    <meta http-equiv="refresh" content="5"></meta>
-    <script type="text/javascript" src="static/jqplot/plugins/jqplot.canvasTextRenderer.min.js"></script>
-    <script type="text/javascript" src="static/jqplot/plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
-    <script language="javascript" type="text/javascript" src="static/jqplot/jquery.min.js"></script>
-    <script language="javascript" type="text/javascript" src="static/jqplot/jquery.jqplot.min.js"></script>
-    <script type="text/javascript" src="static/jqplot/plugins/jqplot.pieRenderer.min.js"></script>
-    <script type="text/javascript" src="static/jqplot/plugins/jqplot.donutRenderer.min.js"></script>
-    <script type="text/javascript" src="static/jqplot/plugins/jqplot.barRenderer.min.js"></script>
-    <script type="text/javascript" src="static/jqplot/plugins/jqplot.categoryAxisRenderer.min.js"></script>
-    <script type="text/javascript" src="static/jqplot/src/plugins/jqplot.pointLabels.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="static/jqplot/jquery.jqplot.css" />
+    <title>wsstat</title>
+    <script src="/static/jquery/jquery-1.11.1.min.js"></script>
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
     <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="/static/bootstrap/css/bootstrap-theme.min.css">
     <script src="/static/bootstrap/js/bootstrap.min.js"></script>
-    <script type="text/javascript">
-
-      $(document).ready(function(){
-      var s1 = [
-      {{range .Apps}}
-      ["{{.Name}} {{.VmData}}",{{.VmData}}],
-      {{end}}
-      ];
-
-      var s2 = [["Mémoire libre  ({{printf "%.2f" .MemFree}})",{{.MemFree}}],["Mémoire utilisée ({{printf "%.2f" .MemTotal}})",{{.MemTotal}}]];
-      
-      
-      var plot1 = $.jqplot('chart1', [s1,s2], {
-      title:'Répartition de la RAM (kB)',
-      seriesDefaults: {
-      renderer:$.jqplot.DonutRenderer,
-      rendererOptions:{
-      sliceMargin: 3,
-      startAngle: -90,
-      showDataLabels: true,
-      }
-      },
-      legend: { show:true, location: 'e' }
-      });
-      
-      var s2 = [["Mémoire libre  ({{printf "%.2f" .MemFree}})",{{.MemFree}}],["Mémoire utilisée ({{printf "%.2f" .MemTotal}})",{{.MemTotal}}]];
-      
-      var plot2 = $.jqplot('chart2', [s2], {
-      seriesColors: [ "#ADFF2F", "#F08080"],
-      title:'Utilisation de la RAM (Gb)',
-      seriesDefaults: {
-      renderer:$.jqplot.DonutRenderer,
-      rendererOptions:{
-      sliceMargin: 3,
-      startAngle: -90,
-      showDataLabels: true,
-      }
-      },
-      legend: { show:true, location: 'e' },
-      });
-      
-      });
-      
-    </script>
+    <script src="/static/playadm/js/playadm.js"></script> 
+    <script  type="text/javascript">
+</script>
   </head>
   <body >
     <nav class="navbar navbar-default navbar-static-top" role="navigation">
@@ -67,53 +18,25 @@
           <a class="navbar-brand" href="/">playadm</a>
         </div>
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-          <!-- <ul class="nav navbar-nav"> -->
-          <!--   <li><a href="/admin/">Admin</a></li> -->
-          <!-- </ul> -->
-          <p class="navbar-text navbar-right"><a href="#" class="navbar-link">st(si)²</a>/sdac</p>
+          <p class="navbar-text navbar-right"><a href="#" class="navbar-link">st(si)2/sdac</a> ⠵</p>
         </div>
       </div>
     </nav>
-
     <div class="container">
       <center>
 	<table>
 	  <tr>
 	    <td>
-	      <div id="chart1" style="height:400px;width:600px; "/>
+	      <div id="container" style="width: 600px; height: 400px; margin: 0 auto"></div>
 	    </td><td>
       	      <div id="chart2" style="height:400px;width:600px; "/>
+	      <div id="container-mem" style="width: 600px; height: 400px; margin: 0 auto"></div>
 	    </td>
 	  </tr>
 	</table>
-      </center>
-      <div>
-	<u>Server memory usage</u> : <b>{{printf "%.2f" .MemFree}}</b>/<b>{{printf "%.2f" .MemTotal}} Gb</b>
 	<br><br>
-      </div>
-      <div class="panel panel-default">
-	<table class="table">
-	  <tr>
-	    <th>Name</th><th>Pid</th><th>Port</th><th>VmRam</th><th>State</th>
-	  </tr>
-	  {{ range .Apps}}
-	  <tr>
-	    <td>{{.Name}}</td>
-	    <td>{{.Pid}}</td>
-	    <td>{{.Port}}</td>
-	    <td>{{.VmData}} kB</td>
-	    <td>
-	      {{if eq .State 0}}
-	      <button class="btn btn-success">Run</button>
-	      {{else if eq .State 1}}
-	      <button class="btn btn-warning">Down</button>
-	      {{else}}
-	      <button class="btn btn-danger">Fail</button>
-	      {{end}}
-	    </td>
-	  </tr>
-	  {{ end }}
-	</table>
+      </center>
+      <div class="panel panel-default" id="tbl">
       </div>
     </div>
   </body>
